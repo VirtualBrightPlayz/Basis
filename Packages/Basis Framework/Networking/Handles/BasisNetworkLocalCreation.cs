@@ -52,5 +52,17 @@ namespace Basis.Scripts.Networking
                 BasisNetworkManagement.HasSentOnLocalPlayerJoin = true;
             }
         }
+
+        public static void HandleAuthChallenge(DarkRiftReader reader)
+        {
+            byte[] data = reader.ReadBytes();
+            byte[] response = BasisNetworkManagement.Instance.clientAuth.RespondToChallenge(data);
+            using (DarkRiftWriter writer = DarkRiftWriter.Create())
+            {
+                writer.Write(response);
+                Message ResponseMessage = Message.Create(BasisTags.AuthChallengeResponse, writer);
+                BasisNetworkManagement.Instance.Client.SendMessage(ResponseMessage, BasisNetworking.EventsChannel, DeliveryMethod.ReliableOrdered);
+            }
+        }
     }
 }

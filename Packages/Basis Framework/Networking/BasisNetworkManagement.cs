@@ -23,6 +23,7 @@ namespace Basis.Scripts.Networking
         public bool HasAuthenticated = false;
 
         public BasisLowLevelClient Client;
+        public IClientAuthChallenge clientAuth = new ExampleClientAuth();
         public ReadyMessage readyMessage = new ReadyMessage();
         /// <summary>
         /// fire when ownership is changed for a unique string
@@ -174,6 +175,13 @@ namespace Basis.Scripts.Networking
         {
             if (e == null)
             {
+                string identity = clientAuth.GetPublicIdentity();
+                using (DarkRiftWriter writer = DarkRiftWriter.Create())
+                {
+                    writer.Write(identity);
+                    Message IdentityMessage = Message.Create(BasisTags.AuthIdentity, writer);
+                    BasisNetworkManagement.Instance.Client.SendMessage(IdentityMessage, BasisNetworking.EventsChannel, DeliveryMethod.ReliableOrdered);
+                }
             }
             else
             {
@@ -255,6 +263,10 @@ namespace Basis.Scripts.Networking
 
                         case BasisTags.OwnershipTransfer:
                             BasisNetworkGenericMessages.HandleOwnershipTransfer(reader);
+                            break;
+
+                        case BasisTags.AuthChallenge:
+                            BasisNetworkLocalCreation.HandleAuthChallenge(reader);
                             break;
 
                         default:
